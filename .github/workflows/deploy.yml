@@ -1,8 +1,14 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        required: true
+        default: production
+        type: choice
+        options: [production]
 
 env:
   AWS_REGION: us-east-1
