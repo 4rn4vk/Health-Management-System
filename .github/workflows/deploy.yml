@@ -1,0 +1,106 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  PROJECT: hcms
+  ENVIRONMENT: production
+
+jobs:
+  build-and-push:
+    name: Build & push Docker images
+    runs-on: ubuntu-latest
+    outputs:
+      backend_image: ${{ steps.meta-be.outputs.image }}
+      frontend_image: ${{ steps.meta-fe.outputs.image }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - uses: aws-actions/amazon-ecr-login@v2
+        id: ecr-login
+
+      - name: Build & push backend
+        id: meta-be
+        run: |
+          IMAGE="${{ steps.ecr-login.outputs.registry }}/${PROJECT}-${ENVIRONMENT}-backend:${{ github.sha }}"
+          docker build -t "$IMAGE" --target production ./backend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push frontend
+        id: meta-fe
+        run: |
+          IMAGE="${{ steps.ecr-login.outputs.registry }}/${PROJECT}-${ENVIRONMENT}-frontend:${{ github.sha }}"
+          docker build -t "$IMAGE" --target production ./frontend
+          docker push "$IMAGE"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+  terraform-apply:
+    name: Terraform apply
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: production
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.8.0"
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Write tfvars
+        working-directory: infrastructure/environments/production
+        run: |
+          cat > terraform.tfvars <<EOF
+          project           = "${PROJECT}"
+          environment       = "${ENVIRONMENT}"
+          aws_region        = "${AWS_REGION}"
+          db_username       = "${{ secrets.DB_USERNAME }}"
+          db_password       = "${{ secrets.DB_PASSWORD }}"
+          backend_image     = "${{ needs.build-and-push.outputs.backend_image }}"
+          frontend_image    = "${{ needs.build-and-push.outputs.frontend_image }}"
+          app_secret_key    = "${{ secrets.APP_SECRET_KEY }}"
+          EOF
+
+      - name: Terraform init
+        working-directory: infrastructure/environments/production
+        run: terraform init
+
+      - name: Terraform apply
+        working-directory: infrastructure/environments/production
+        run: terraform apply -auto-approve
+
+  ecs-redeploy:
+    name: Force ECS redeploy
+    runs-on: ubuntu-latest
+    needs: terraform-apply
+
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Force new ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster "${PROJECT}-${ENVIRONMENT}" \
+            --service "${PROJECT}-${ENVIRONMENT}-backend" \
+            --force-new-deployment

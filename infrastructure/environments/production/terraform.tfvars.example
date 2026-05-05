@@ -1,0 +1,11 @@
+# Copy to terraform.tfvars and fill in values — NEVER commit this file
+project          = "hcms"
+environment      = "production"
+aws_region       = "us-east-1"
+db_username      = "hcms_prod"
+db_password      = "CHANGE_ME_STRONG_PASSWORD"
+db_instance_class = "db.t3.small"
+db_multi_az      = true
+backend_image    = "123456789.dkr.ecr.us-east-1.amazonaws.com/hcms-production-backend:latest"
+frontend_image   = "123456789.dkr.ecr.us-east-1.amazonaws.com/hcms-production-frontend:latest"
+app_secret_key   = "CHANGE_ME_RANDOM_SECRET_64_CHARS"

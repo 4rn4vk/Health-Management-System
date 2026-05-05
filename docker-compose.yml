@@ -1,0 +1,82 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: hcms_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-hcms}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-hcmspassword}
+      POSTGRES_DB: ${POSTGRES_DB:-hcms}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hcms}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  localstack:
+    image: localstack/localstack:3.4
+    container_name: hcms_localstack
+    environment:
+      SERVICES: s3,secretsmanager,logs
+      DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      LOCALSTACK_AUTH_TOKEN: ${LOCALSTACK_AUTH_TOKEN:-}
+    ports:
+      - "4566:4566"
+    volumes:
+      - localstack_data:/var/lib/localstack
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    container_name: hcms_backend
+    environment:
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-hcms}:${POSTGRES_PASSWORD:-hcmspassword}@db:5432/${POSTGRES_DB:-hcms}
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION:-us-east-1}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-test}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-test}
+      LOCALSTACK_ENDPOINT_URL: http://localstack:4566
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-hcms-documents}
+      USE_SECRETS_MANAGER: "false"
+      ENVIRONMENT: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+  frontend:
+    build:
+      context: ./frontend
+      target: development
+    container_name: hcms_frontend
+    environment:
+      VITE_API_BASE_URL: http://localhost:8000
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  postgres_data:
+  localstack_data:
