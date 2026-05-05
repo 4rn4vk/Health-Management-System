@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { providersApi } from "@/api";
 import type { Provider, Specialty } from "@/api/types";
 import { useAuth } from "@/context/AuthContext";
@@ -26,6 +26,20 @@ export function ProvidersPage() {
   const [selectedSpecialties, setSelectedSpecialties] = useState<number[]>([]);
   const [page, setPage] = useState(1);
   const pageSize = 25;
+
+  // Specialty dropdown
+  const [specOpen, setSpecOpen] = useState(false);
+  const specRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (specRef.current && !specRef.current.contains(e.target as Node)) {
+        setSpecOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // Provider detail panel
   const [selected, setSelected] = useState<Provider | null>(null);
@@ -98,20 +112,59 @@ export function ProvidersPage() {
           <option value="">All States</option>
           {US_STATES.map((s) => <option key={s} value={s}>{s}</option>)}
         </select>
-        <select
-          multiple
-          value={selectedSpecialties.map(String)}
-          onChange={(e) =>
-            setSelectedSpecialties(
-              Array.from(e.target.selectedOptions, (o) => Number(o.value))
-            )
-          }
-          className="border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 h-9"
-        >
-          {specialties.map((sp) => (
-            <option key={sp.id} value={sp.id}>{sp.name}</option>
-          ))}
-        </select>
+
+        {/* Specialty multi-select dropdown */}
+        <div ref={specRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setSpecOpen((o) => !o)}
+            className="border rounded-md px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 flex items-center gap-2 bg-white min-w-[160px]"
+          >
+            <span className="flex-1 text-left text-slate-700">
+              {selectedSpecialties.length === 0
+                ? "All Specialties"
+                : `${selectedSpecialties.length} selected`}
+            </span>
+            <svg className={cn("w-4 h-4 text-slate-400 transition-transform", specOpen && "rotate-180")} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+
+          {specOpen && (
+            <div className="absolute z-20 mt-1 left-0 bg-white border rounded-lg shadow-lg py-1 min-w-[200px] max-h-64 overflow-y-auto">
+              {selectedSpecialties.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedSpecialties([])}
+                  className="w-full text-left px-3 py-1.5 text-xs text-blue-600 hover:bg-slate-50 border-b"
+                >
+                  Clear selection
+                </button>
+              )}
+              {specialties.map((sp) => {
+                const checked = selectedSpecialties.includes(sp.id);
+                return (
+                  <label
+                    key={sp.id}
+                    className="flex items-center gap-2 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() =>
+                        setSelectedSpecialties((prev) =>
+                          checked ? prev.filter((id) => id !== sp.id) : [...prev, sp.id]
+                        )
+                      }
+                      className="accent-blue-600"
+                    />
+                    {sp.name}
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Table */}
