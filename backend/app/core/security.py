@@ -39,6 +39,10 @@ def create_refresh_token(user_id: int) -> str:
 
 
 def decode_token(token: str) -> dict:
+    return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+
+
+def decode_token(token: str) -> dict:
     """Raises JWTError on failure."""
     return jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
 
