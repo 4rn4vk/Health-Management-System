@@ -101,20 +101,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install frontend dependencies + Playwright
+        working-directory: frontend
+        run: npm install && npx playwright install --with-deps chromium
+
       - name: Copy env
         run: cp .env.example .env
 
       - name: Start stack
         run: docker compose up -d --wait
         timeout-minutes: 5
-
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install Playwright
-        working-directory: frontend
-        run: npm install && npx playwright install --with-deps chromium
 
       - name: Run migrations + seed
         run: |
