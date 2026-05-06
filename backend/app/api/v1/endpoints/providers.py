@@ -6,7 +6,7 @@ import uuid
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import get_current_user, require_admin, require_viewer
+from app.core.dependencies import require_admin, require_viewer
 from app.db.crud import provider as crud
 from app.db.models.user import User
 from app.db.schemas.provider import (
@@ -104,11 +104,15 @@ async def upload_provider_document(
     settings = get_settings()
 
     if file.size and file.size > settings.max_upload_bytes:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large")
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large"
+        )
 
     allowed_ct = {"text/csv", "application/pdf", "image/png", "image/jpeg"}
     if file.content_type and file.content_type not in allowed_ct:
-        raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported file type")
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Unsupported file type"
+        )
 
     provider = await crud.get_provider(db, provider_id)
     content = await file.read()
@@ -119,7 +123,9 @@ async def upload_provider_document(
     await db.commit()
 
     presigned = s3.generate_presigned_url(s3_key)
-    return DocumentUploadResponse(s3_key=s3_key, filename=file.filename or "", presigned_url=presigned)
+    return DocumentUploadResponse(
+        s3_key=s3_key, filename=file.filename or "", presigned_url=presigned
+    )
 
 
 @router.get("/{provider_id}/documents", response_model=list[DocumentListItem])

@@ -1,10 +1,7 @@
 """Unit tests for the CSV claims parser."""
 from __future__ import annotations
 
-import pytest
-
 from app.services.claims_parser import REQUIRED_COLUMNS, _read_csv
-
 
 VALID_CSV = b"""claim_number,provider_npi,claim_type,service_date,billed_amount,status
 CLM001,1234567890,professional,2025-01-15,250.00,pending

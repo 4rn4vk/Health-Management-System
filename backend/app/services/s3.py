@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import mimetypes
 from functools import lru_cache
 from typing import BinaryIO
 
@@ -36,7 +35,9 @@ def ensure_bucket_exists() -> None:
         client.create_bucket(Bucket=settings.s3_bucket_name)
 
 
-def upload_fileobj(file_obj: BinaryIO, s3_key: str, content_type: str = "application/octet-stream") -> str:
+def upload_fileobj(
+    file_obj: BinaryIO, s3_key: str, content_type: str = "application/octet-stream"
+) -> str:
     """Uploads a file-like object to S3. Returns the s3_key."""
     _get_s3_client().upload_fileobj(
         file_obj,

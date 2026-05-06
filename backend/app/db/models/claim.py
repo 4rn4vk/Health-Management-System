@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -45,12 +45,12 @@ class ClaimBatch(Base):
         Integer, ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    uploaded_by_user: Mapped["User"] = relationship("User", back_populates="batches")  # noqa: F821
-    claims: Mapped[list["Claim"]] = relationship("Claim", back_populates="batch")
+    uploaded_by_user: Mapped[User] = relationship("User", back_populates="batches")  # noqa: F821
+    claims: Mapped[list[Claim]] = relationship("Claim", back_populates="batch")
 
 
 class Claim(Base):
@@ -76,9 +76,9 @@ class Claim(Base):
     procedure_code: Mapped[str | None] = mapped_column(String(20))
     notes: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    provider: Mapped["Provider"] = relationship("Provider", back_populates="claims")  # noqa: F821
+    provider: Mapped[Provider] = relationship("Provider", back_populates="claims")  # noqa: F821
     batch: Mapped[ClaimBatch | None] = relationship("ClaimBatch", back_populates="claims")

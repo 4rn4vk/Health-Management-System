@@ -3,7 +3,8 @@ from __future__ import annotations
 import io
 import uuid as _uuid
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status as http_status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from fastapi import status as http_status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -34,7 +35,9 @@ async def list_claims(
     _: User = Depends(require_viewer),
 ) -> ClaimListResponse:
     items, total = await get_claims(db, filters)
-    return ClaimListResponse(items=items, total=total, page=filters.page, page_size=filters.page_size)
+    return ClaimListResponse(
+        items=items, total=total, page=filters.page, page_size=filters.page_size
+    )
 
 
 router_uploads = APIRouter(prefix="/uploads", tags=["uploads"])
@@ -47,22 +50,32 @@ async def upload_claims_csv(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(require_admin),
 ) -> BatchRead:
-    from fastapi import HTTPException, status as http_status
+    from fastapi import HTTPException
+    from fastapi import status as http_status
 
     settings = get_settings()
 
     # Validate file
     if file.content_type not in {"text/csv", "application/csv", "application/octet-stream"}:
-        raise HTTPException(status_code=http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="Only CSV files accepted")
+        raise HTTPException(
+            status_code=http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Only CSV files accepted",
+        )
 
     content = await file.read()
     if len(content) > settings.max_upload_bytes:
-        raise HTTPException(status_code=http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large (max 10MB)")
+        raise HTTPException(
+            status_code=http_status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="File too large (max 10MB)",
+        )
 
     # Ensure extension is .csv
     filename = file.filename or "upload.csv"
     if not filename.lower().endswith(".csv"):
-        raise HTTPException(status_code=http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail="File must have .csv extension")
+        raise HTTPException(
+            status_code=http_status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="File must have .csv extension",
+        )
 
     s3.ensure_bucket_exists()
     s3_key = f"uploads/claims/{_uuid.uuid4()}/{filename}"

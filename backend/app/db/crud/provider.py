@@ -29,7 +29,9 @@ async def get_providers(
     if search:
         like = f"%{search}%"
         query = query.where(
-            Provider.full_name.ilike(like) | Provider.organization.ilike(like) | Provider.npi.ilike(like)
+            Provider.full_name.ilike(like)
+            | Provider.organization.ilike(like)
+            | Provider.npi.ilike(like)
         )
     if state:
         query = query.where(Provider.state == state.upper())
@@ -48,7 +50,9 @@ async def get_providers(
 
 async def get_provider(db: AsyncSession, provider_id: int) -> Provider:
     result = await db.execute(
-        select(Provider).options(selectinload(Provider.specialties)).where(Provider.id == provider_id)
+        select(Provider)
+        .options(selectinload(Provider.specialties))
+        .where(Provider.id == provider_id)
     )
     provider = result.scalar_one_or_none()
     if provider is None:
@@ -65,7 +69,9 @@ async def create_provider(db: AsyncSession, data: ProviderCreate) -> Provider:
     for sid in data.specialty_ids:
         sp = (await db.execute(select(Specialty).where(Specialty.id == sid))).scalar_one_or_none()
         if sp is None:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Specialty {sid} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Specialty {sid} not found"
+            )
         specialties.append(sp)
 
     provider = Provider(**data.model_dump(exclude={"specialty_ids"}), specialties=specialties)
@@ -85,7 +91,9 @@ async def update_provider(db: AsyncSession, provider_id: int, data: ProviderUpda
     if data.specialty_ids is not None:
         specialties = []
         for sid in data.specialty_ids:
-            sp = (await db.execute(select(Specialty).where(Specialty.id == sid))).scalar_one_or_none()
+            sp = (
+                await db.execute(select(Specialty).where(Specialty.id == sid))
+            ).scalar_one_or_none()
             if sp is None:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND, detail=f"Specialty {sid} not found"

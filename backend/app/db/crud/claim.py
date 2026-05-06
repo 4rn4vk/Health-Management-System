@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, timedelta
 
 from sqlalchemy import case, extract, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.claim import Claim, ClaimBatch, ClaimStatus
+from app.db.models.claim import Claim
 from app.db.models.provider import Provider
 from app.db.schemas.claim import ClaimFilter, ClaimMetrics
 
@@ -87,7 +87,7 @@ async def get_claim_metrics(db: AsyncSession) -> ClaimMetrics:
         )
     ).all()
     provider_volume = [
-        {"provider_id": r.provider_id, "provider_name": r.provider_name, "claim_count": r.claim_count}
+        {"provider_id": r.provider_id, "provider_name": r.provider_name, "claim_count": r.claim_count}  # noqa: E501
         for r in vol_rows
     ]
 

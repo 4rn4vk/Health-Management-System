@@ -16,5 +16,7 @@ async def login_endpoint(request: LoginRequest, db: AsyncSession = Depends(get_d
 
 
 @router.post("/refresh", response_model=TokenPair)
-async def refresh_endpoint(request: RefreshRequest, db: AsyncSession = Depends(get_db)) -> TokenPair:
+async def refresh_endpoint(
+    request: RefreshRequest, db: AsyncSession = Depends(get_db)
+) -> TokenPair:
     return await refresh(request, db)

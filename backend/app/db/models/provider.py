@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Table, Column
+from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -11,8 +11,12 @@ from app.db.base import Base
 provider_specialties = Table(
     "provider_specialties",
     Base.metadata,
-    Column("provider_id", Integer, ForeignKey("providers.id", ondelete="CASCADE"), primary_key=True),
-    Column("specialty_id", Integer, ForeignKey("specialties.id", ondelete="CASCADE"), primary_key=True),
+    Column(
+        "provider_id", Integer, ForeignKey("providers.id", ondelete="CASCADE"), primary_key=True
+    ),
+    Column(
+        "specialty_id", Integer, ForeignKey("specialties.id", ondelete="CASCADE"), primary_key=True
+    ),
 )
 
 
@@ -22,7 +26,7 @@ class Specialty(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False, index=True)
 
-    providers: Mapped[list["Provider"]] = relationship(
+    providers: Mapped[list[Provider]] = relationship(
         "Provider", secondary=provider_specialties, back_populates="specialties"
     )
 
@@ -42,16 +46,16 @@ class Provider(Base):
     is_active: Mapped[bool] = mapped_column(default=True, nullable=False)
     license_document_s3_key: Mapped[str | None] = mapped_column(String(512))
     created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False
+        DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
-        onupdate=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
+        onupdate=lambda: datetime.now(UTC),
         nullable=False,
     )
 
     specialties: Mapped[list[Specialty]] = relationship(
         "Specialty", secondary=provider_specialties, back_populates="providers"
     )
-    claims: Mapped[list["Claim"]] = relationship("Claim", back_populates="provider")  # noqa: F821
+    claims: Mapped[list[Claim]] = relationship("Claim", back_populates="provider")  # noqa: F821

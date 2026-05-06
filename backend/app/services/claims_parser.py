@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import csv
 import io
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import structlog
 from sqlalchemy import select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models.claim import Claim, ClaimBatch, BatchStatus, ClaimStatus, ClaimType
+from app.db.models.claim import BatchStatus, Claim, ClaimBatch, ClaimStatus, ClaimType
 from app.db.models.provider import Provider
 from app.db.session import AsyncSessionLocal
 
@@ -66,7 +66,7 @@ async def parse_and_import(batch_id: int, csv_content: bytes) -> None:
         batch.error_count = errors
         batch.status = BatchStatus.completed if errors == 0 else BatchStatus.failed
         batch.error_detail = "\n".join(error_msgs) if error_msgs else None
-        batch.completed_at = datetime.now(timezone.utc)
+        batch.completed_at = datetime.now(UTC)
         await db.commit()
         logger.info("batch_completed", batch_id=batch_id, imported=imported, errors=errors)
 
@@ -85,7 +85,7 @@ async def _get_batch(db: AsyncSession, batch_id: int) -> ClaimBatch | None:
 async def _fail_batch(db: AsyncSession, batch: ClaimBatch, reason: str) -> None:
     batch.status = BatchStatus.failed
     batch.error_detail = reason
-    batch.completed_at = datetime.now(timezone.utc)
+    batch.completed_at = datetime.now(UTC)
     await db.commit()
     logger.error("batch_failed", batch_id=batch.id, reason=reason)
 
@@ -106,7 +106,7 @@ async def _parse_row(db: AsyncSession, row: dict) -> dict:
         "status": ClaimStatus(row.get("status", "pending").strip().lower()),
         "service_date": _date.fromisoformat(row["service_date"].strip()),
         "billed_amount": float(row["billed_amount"].strip()),
-        "approved_amount": float(row["approved_amount"].strip()) if row.get("approved_amount") else None,
+        "approved_amount": float(row["approved_amount"].strip()) if row.get("approved_amount") else None,  # noqa: E501
         "patient_id": row.get("patient_id", "").strip() or None,
         "diagnosis_code": row.get("diagnosis_code", "").strip() or None,
         "procedure_code": row.get("procedure_code", "").strip() or None,
