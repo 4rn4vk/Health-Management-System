@@ -119,7 +119,7 @@ jobs:
       - name: Run migrations + seed
         run: |
           docker compose exec -T backend alembic upgrade head
-          docker compose exec -T backend python scripts/seed.py
+          docker compose exec -T -e PYTHONPATH=/app backend python scripts/seed.py
 
       - name: Playwright tests
         working-directory: frontend
