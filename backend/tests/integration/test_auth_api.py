@@ -52,7 +52,29 @@ async def test_login_wrong_password(client: AsyncClient, db_session: AsyncSessio
 @pytest.mark.asyncio
 async def test_protected_route_without_token(client: AsyncClient):
     r = await client.get("/api/v1/providers")
-    assert r.status_code == 403  # HTTPBearer returns 403 when no credentials
+    assert r.status_code == 401  # FastAPI 0.115+ HTTPBearer returns 401 for missing credentials
+
+
+@pytest.mark.asyncio
+async def test_invalid_token_returns_401(client: AsyncClient):
+    r = await client.get(
+        "/api/v1/providers",
+        headers={"Authorization": "Bearer not.a.valid.jwt"},
+    )
+    assert r.status_code == 401
+
+
+@pytest.mark.asyncio
+async def test_wrong_token_type_returns_401(client: AsyncClient):
+    """A refresh token must not be accepted as an access token."""
+    from app.core.security import create_refresh_token
+
+    token = create_refresh_token(user_id=999)
+    r = await client.get(
+        "/api/v1/providers",
+        headers={"Authorization": f"Bearer {token}"},
+    )
+    assert r.status_code == 401
 
 
 @pytest.mark.asyncio
