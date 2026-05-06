@@ -35,3 +35,5 @@ infrastructure/**/terraform.tfvars
 # IDE
 .vscode/settings.json
 .idea/
+
+frontend/package-lock.json
