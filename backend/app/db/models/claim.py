@@ -2,11 +2,16 @@ from __future__ import annotations
 
 import enum
 from datetime import UTC, date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.provider import Provider
+    from app.db.models.user import User
 
 
 class ClaimStatus(str, enum.Enum):
@@ -49,7 +54,7 @@ class ClaimBatch(Base):
     )
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    uploaded_by_user: Mapped[User] = relationship("User", back_populates="batches")  # noqa: F821
+    uploaded_by_user: Mapped[User] = relationship("User", back_populates="batches")
     claims: Mapped[list[Claim]] = relationship("Claim", back_populates="batch")
 
 
@@ -80,5 +85,5 @@ class Claim(Base):
     )
     processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
-    provider: Mapped[Provider] = relationship("Provider", back_populates="claims")  # noqa: F821
+    provider: Mapped[Provider] = relationship("Provider", back_populates="claims")
     batch: Mapped[ClaimBatch | None] = relationship("ClaimBatch", back_populates="claims")

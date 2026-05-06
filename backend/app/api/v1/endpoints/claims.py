@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import uuid as _uuid
+from typing import cast
 
 from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
 from fastapi import status as http_status
@@ -13,7 +14,7 @@ from app.core.dependencies import require_admin, require_viewer
 from app.db.crud.claim import get_claim_metrics, get_claims
 from app.db.models.claim import ClaimBatch
 from app.db.models.user import User
-from app.db.schemas.claim import BatchRead, ClaimFilter, ClaimListResponse, ClaimMetrics
+from app.db.schemas.claim import BatchRead, ClaimFilter, ClaimListResponse, ClaimMetrics, ClaimRead
 from app.db.session import get_db
 from app.services import claims_parser, s3
 
@@ -36,7 +37,10 @@ async def list_claims(
 ) -> ClaimListResponse:
     items, total = await get_claims(db, filters)
     return ClaimListResponse(
-        items=items, total=total, page=filters.page, page_size=filters.page_size
+        items=cast(list[ClaimRead], items),
+        total=total,
+        page=filters.page,
+        page_size=filters.page_size,
     )
 
 
@@ -92,7 +96,7 @@ async def upload_claims_csv(
 
     background_tasks.add_task(claims_parser.parse_and_import, batch.id, content)
 
-    return batch
+    return cast(BatchRead, batch)
 
 
 @router_uploads.get("/batches", response_model=list[BatchRead])

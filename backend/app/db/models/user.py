@@ -2,11 +2,15 @@ from __future__ import annotations
 
 import enum
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import DateTime, Enum, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.claim import ClaimBatch
 
 
 class UserRole(str, enum.Enum):
@@ -27,6 +31,6 @@ class User(Base):
         DateTime(timezone=True), default=lambda: datetime.now(UTC), nullable=False
     )
 
-    batches: Mapped[list[ClaimBatch]] = relationship(  # noqa: F821
+    batches: Mapped[list[ClaimBatch]] = relationship(
         "ClaimBatch", back_populates="uploaded_by_user"
     )

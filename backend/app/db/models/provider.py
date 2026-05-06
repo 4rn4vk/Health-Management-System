@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
+
+if TYPE_CHECKING:
+    from app.db.models.claim import Claim
 
 # Many-to-many join table
 provider_specialties = Table(
@@ -58,4 +62,4 @@ class Provider(Base):
     specialties: Mapped[list[Specialty]] = relationship(
         "Specialty", secondary=provider_specialties, back_populates="providers"
     )
-    claims: Mapped[list[Claim]] = relationship("Claim", back_populates="provider")  # noqa: F821
+    claims: Mapped[list[Claim]] = relationship("Claim", back_populates="provider")

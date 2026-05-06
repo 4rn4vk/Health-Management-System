@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import io
 import uuid
+from typing import cast
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -52,7 +53,9 @@ async def list_providers(
         page=page,
         page_size=page_size,
     )
-    return ProviderListResponse(items=items, total=total, page=page, page_size=page_size)
+    return ProviderListResponse(
+        items=cast(list[ProviderRead], items), total=total, page=page, page_size=page_size
+    )
 
 
 @router.post("", response_model=ProviderRead, status_code=201)
@@ -61,7 +64,7 @@ async def create_provider(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> ProviderRead:
-    return await crud.create_provider(db, data)
+    return cast(ProviderRead, await crud.create_provider(db, data))
 
 
 @router.get("/{provider_id}", response_model=ProviderRead)
@@ -70,7 +73,7 @@ async def get_provider(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_viewer),
 ) -> ProviderRead:
-    return await crud.get_provider(db, provider_id)
+    return cast(ProviderRead, await crud.get_provider(db, provider_id))
 
 
 @router.put("/{provider_id}", response_model=ProviderRead)
@@ -80,7 +83,7 @@ async def update_provider(
     db: AsyncSession = Depends(get_db),
     _: User = Depends(require_admin),
 ) -> ProviderRead:
-    return await crud.update_provider(db, provider_id, data)
+    return cast(ProviderRead, await crud.update_provider(db, provider_id, data))
 
 
 @router.delete("/{provider_id}", status_code=204)
