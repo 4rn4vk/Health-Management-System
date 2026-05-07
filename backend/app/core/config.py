@@ -17,6 +17,14 @@ class Settings(BaseSettings):
     # Database
     database_url: str = Field(..., description="Async SQLAlchemy database URL")
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def _fix_database_url(cls, v: str) -> str:
+        # Fly.io injects postgres:// — rewrite to postgresql+asyncpg://
+        if isinstance(v, str) and v.startswith("postgres://"):
+            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        return v
+
     # Security
     secret_key: str = Field(..., description="JWT signing secret")
     algorithm: str = "HS256"
