@@ -3,7 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -38,6 +38,17 @@ class Settings(BaseSettings):
 
     # File uploads
     max_upload_bytes: int = 10 * 1024 * 1024  # 10 MB
+    enable_uploads: bool = True
+
+    # CORS (comma-separated origins for production, e.g. https://app.vercel.app)
+    cors_origins: list[str] = []
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v: object) -> object:
+        if isinstance(v, str):
+            return [o.strip() for o in v.split(",") if o.strip()]
+        return v
 
 
 @lru_cache

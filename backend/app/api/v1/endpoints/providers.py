@@ -106,6 +106,12 @@ async def upload_provider_document(
 
     settings = get_settings()
 
+    if not settings.enable_uploads:
+        raise HTTPException(
+            status_code=status.HTTP_501_NOT_IMPLEMENTED,
+            detail="File uploads are disabled on this deployment",
+        )
+
     if file.size and file.size > settings.max_upload_bytes:
         raise HTTPException(
             status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="File too large"

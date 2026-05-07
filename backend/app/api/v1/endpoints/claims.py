@@ -59,6 +59,12 @@ async def upload_claims_csv(
 
     settings = get_settings()
 
+    if not settings.enable_uploads:
+        raise HTTPException(
+            status_code=http_status.HTTP_501_NOT_IMPLEMENTED,
+            detail="File uploads are disabled on this deployment",
+        )
+
     # Validate file
     if file.content_type not in {"text/csv", "application/csv", "application/octet-stream"}:
         raise HTTPException(
