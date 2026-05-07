@@ -40,10 +40,12 @@ def create_app() -> FastAPI:
     app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)  # type: ignore[arg-type]
 
     # CORS
+    # cors_origins is a comma-separated string to avoid pydantic_settings JSON-decoding.
+    _prod_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
     origins = (
         ["http://localhost:5173", "http://localhost:3000"]
         if settings.environment == "development"
-        else settings.cors_origins
+        else _prod_origins
     )
     app.add_middleware(
         CORSMiddleware,

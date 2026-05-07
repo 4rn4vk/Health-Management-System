@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 from typing import Literal
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,9 +21,19 @@ class Settings(BaseSettings):
     @field_validator("database_url", mode="before")
     @classmethod
     def _fix_database_url(cls, v: str) -> str:
-        # Fly.io injects postgres:// — rewrite to postgresql+asyncpg://
-        if isinstance(v, str) and v.startswith("postgres://"):
-            return v.replace("postgres://", "postgresql+asyncpg://", 1)
+        if isinstance(v, str):
+            # Fly.io injects postgres:// — rewrite to postgresql+asyncpg://
+            if v.startswith("postgres://"):
+                v = v.replace("postgres://", "postgresql+asyncpg://", 1)
+            # SQLAlchemy asyncpg dialect cannot pass sslmode= as a connect kwarg.
+            # Replace sslmode=<value> with ssl=<value> — asyncpg parses the
+            # `ssl` query param as an sslmode string (disable/allow/prefer/...).
+            if "sslmode" in v:
+                parsed = urlparse(v)
+                params = parse_qs(parsed.query, keep_blank_values=True)
+                sslmode_values = params.pop("sslmode", ["disable"])
+                params["ssl"] = [sslmode_values[0]]
+                v = urlunparse(parsed._replace(query=urlencode(params, doseq=True)))
         return v
 
     # Security
@@ -49,14 +60,8 @@ class Settings(BaseSettings):
     enable_uploads: bool = True
 
     # CORS (comma-separated origins for production, e.g. https://app.vercel.app)
-    cors_origins: list[str] = []
-
-    @field_validator("cors_origins", mode="before")
-    @classmethod
-    def _parse_cors_origins(cls, v: object) -> object:
-        if isinstance(v, str):
-            return [o.strip() for o in v.split(",") if o.strip()]
-        return v
+    # Stored as str to avoid pydantic_settings JSON-decoding list fields from env vars.
+    cors_origins: str = ""
 
 
 @lru_cache

@@ -13,9 +13,7 @@ primary_region = "iad"      # us-east (Virginia) — change if you prefer anothe
   USE_SECRETS_MANAGER = "false"
   ENABLE_UPLOADS    = "false"
   AWS_DEFAULT_REGION = "us-east-1"
-  # Dummy AWS creds (no real AWS used, but boto3 requires them)
-  AWS_ACCESS_KEY_ID     = "unused"
-  AWS_SECRET_ACCESS_KEY = "unused"
+  # AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are set as Fly secrets
 
 [http_service]
   internal_port       = 8000
