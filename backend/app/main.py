@@ -42,14 +42,17 @@ def create_app() -> FastAPI:
     # CORS
     # cors_origins is a comma-separated string to avoid pydantic_settings JSON-decoding.
     _prod_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
-    origins = (
-        ["http://localhost:5173", "http://localhost:3000"]
-        if settings.environment == "development"
-        else _prod_origins
-    )
+    if settings.environment == "development":
+        origins = ["http://localhost:5173", "http://localhost:3000"]
+        origin_regex = None
+    else:
+        origins = _prod_origins
+        # Also allow all Vercel preview/deploy-specific URLs for this project
+        origin_regex = r"https://hcms(-[a-z0-9]+-nocodermans-projects|-nocodermans-projects)\.vercel\.app"
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
+        allow_origin_regex=origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
