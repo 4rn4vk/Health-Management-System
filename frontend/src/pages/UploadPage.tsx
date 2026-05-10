@@ -115,8 +115,10 @@ export function UploadPage() {
       {batches.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-slate-700 mb-3">Upload History</h3>
-          <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="relative bg-white rounded-xl border shadow-sm overflow-hidden">
+            <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent z-10 md:hidden" />
+            <div className="overflow-x-auto">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500 tracking-wide">
                 <tr>
                   <th className="px-4 py-3 text-left">Filename</th>
@@ -150,6 +152,7 @@ export function UploadPage() {
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         </div>
       )}

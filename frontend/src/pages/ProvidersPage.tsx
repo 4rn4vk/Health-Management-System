@@ -83,12 +83,12 @@ export function ProvidersPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-xl font-bold text-slate-800">Provider Directory</h2>
         {isAdmin && (
           <button
             onClick={() => { setSelected(null); setPanelOpen(true); }}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md"
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-md shrink-0"
           >
             + Add Provider
           </button>
@@ -168,8 +168,10 @@ export function ProvidersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="relative bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent z-10 md:hidden" />
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[640px]">
           <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500 tracking-wide">
             <tr>
               <th className="px-4 py-3 text-left">NPI</th>
@@ -222,9 +224,11 @@ export function ProvidersPage() {
           </tbody>
         </table>
 
+        </div>
+
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-slate-600">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-3 border-t text-sm text-slate-600">
             <span>{total} total providers</span>
             <div className="flex gap-2">
               <button
@@ -343,7 +347,7 @@ function ProviderPanel({
   return (
     <>
       <div className="fixed inset-0 bg-black/30 z-40" onClick={onClose} />
-      <aside className="fixed right-0 top-0 h-full w-[460px] bg-white shadow-2xl z-50 flex flex-col">
+      <aside className="fixed right-0 top-0 h-full w-full sm:w-[460px] bg-white shadow-2xl z-50 flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b">
           <h3 className="font-semibold text-slate-800">
             {provider ? "Provider Details" : "New Provider"}

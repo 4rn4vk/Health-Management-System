@@ -86,8 +86,10 @@ export function ClaimsPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="relative bg-white rounded-xl border shadow-sm overflow-hidden">
+        <div className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent z-10 md:hidden" />
+        <div className="overflow-x-auto">
+        <table className="w-full text-sm min-w-[600px]">
           <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500 tracking-wide">
             <tr>
               <th className="px-4 py-3 text-left">Claim #</th>
@@ -125,9 +127,10 @@ export function ClaimsPage() {
             )}
           </tbody>
         </table>
+        </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t text-sm text-slate-600">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 py-3 border-t text-sm text-slate-600">
             <span>{total} total claims</span>
             <div className="flex gap-2">
               <button disabled={page === 1} onClick={() => setFilters((f) => ({ ...f, page: (f.page ?? 1) - 1 }))} className="px-3 py-1 border rounded-md disabled:opacity-40">Previous</button>

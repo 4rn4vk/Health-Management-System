@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, Outlet, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { cn } from "@/lib/utils";
@@ -5,6 +6,7 @@ import {
   ActivityIcon,
   HomeIcon,
   LogOutIcon,
+  MenuIcon,
   UploadIcon,
   UsersIcon,
 } from "lucide-react";
@@ -19,11 +21,26 @@ const navItems = [
 export function AppShell() {
   const { role, logout } = useAuth();
   const { pathname } = useLocation();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <div className="flex h-screen">
+    <div className="flex h-screen overflow-hidden">
+      {/* Mobile overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
       {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex flex-col">
+      <aside
+        className={cn(
+          "fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-white flex flex-col",
+          "transition-transform duration-200 ease-in-out",
+          sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
         <div className="px-6 py-5 border-b border-slate-700">
           <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">
             Federal Health IT
@@ -37,6 +54,7 @@ export function AppShell() {
               <Link
                 key={to}
                 to={to}
+                onClick={() => setSidebarOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors",
                   pathname.startsWith(to)
@@ -64,14 +82,27 @@ export function AppShell() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-auto bg-slate-50">
-        {/* Demo banner */}
-        <div className="bg-amber-50 border-b border-amber-200 px-6 py-2 flex items-center gap-2 text-xs text-amber-800">
-          <span className="font-semibold shrink-0">Demo environment</span>
-          <span className="text-amber-600">·</span>
-          <span>Portfolio project — AWS S3, CloudWatch &amp; Secrets Manager are stubbed out. No real patient data is stored.</span>
+      <main className="flex-1 overflow-auto bg-slate-50 flex flex-col min-w-0">
+        {/* Mobile top bar */}
+        <div className="md:hidden flex items-center gap-3 px-4 py-3 bg-slate-900 text-white shrink-0">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-slate-300 hover:text-white p-1 -ml-1"
+            aria-label="Open navigation"
+          >
+            <MenuIcon className="h-5 w-5" />
+          </button>
+          <span className="font-bold text-sm">HCMS Portal</span>
         </div>
-        <div className="p-6">
+
+        {/* Demo banner */}
+        <div className="bg-amber-50 border-b border-amber-200 px-4 md:px-6 py-2 flex items-center gap-2 text-xs text-amber-800 shrink-0">
+          <span className="font-semibold shrink-0">Demo environment</span>
+          <span className="text-amber-600 hidden sm:inline">·</span>
+          <span className="hidden sm:inline">Portfolio project — AWS S3, CloudWatch &amp; Secrets Manager are stubbed out. No real patient data is stored.</span>
+        </div>
+
+        <div className="p-4 md:p-6 overflow-auto flex-1">
           <Outlet />
         </div>
       </main>

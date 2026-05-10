@@ -62,7 +62,7 @@ export function DashboardPage() {
       <h2 className="text-xl font-bold text-slate-800">Dashboard</h2>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard label="Total Claims" value={total.toLocaleString()} />
         <MetricCard
           label="Approved"
